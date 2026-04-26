@@ -94,6 +94,22 @@ const server = http.createServer((req, res) => {
         return;
     }
 
+    if (req.method === 'DELETE' && isMovies && id) {
+        const movies = readMovies();
+        const index = movies.findIndex(m => m.id === id);
+
+        if (index === -1) {
+            res.writeHead(404);
+            return res.end(JSON.stringify({ error: 'Not Found' }));
+        }
+
+        const deleted = movies.splice(index, 1)[0];
+        saveMovies(movies);
+
+        res.writeHead(200);
+        return res.end(JSON.stringify(deleted));
+    }
+
     res.writeHead(404);
     res.end(JSON.stringify({ error: 'Route Not Found' }));
 });
