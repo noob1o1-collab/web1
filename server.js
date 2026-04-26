@@ -30,6 +30,70 @@ const server = http.createServer((req, res) => {
         return res.end(JSON.stringify(movie));
     }
 
+    if (req.method === 'POST' && isMovies) {
+        let body = '';
+
+        req.on('data', chunk => {
+            body += chunk.toString();
+        });
+
+        req.on('end', () => {
+            try {
+                const movies = readMovies();
+                const data = JSON.parse(body);
+
+                const newMovie = {
+                    id: movies.length ? Math.max(...movies.map(m => m.id)) + 1 : 1,
+                    ...data
+                };
+
+                movies.push(newMovie);
+                saveMovies(movies);
+
+                res.writeHead(201);
+                return res.end(JSON.stringify(newMovie));
+            } catch {
+                res.writeHead(400);
+                return res.end(JSON.stringify({ error: 'Invalid JSON' }));
+            }
+        });
+
+        return;
+    }
+
+    if (req.method === 'PUT' && isMovies && id) {
+        let body = '';
+
+        req.on('data', chunk => {
+            body += chunk.toString();
+        });
+
+        req.on('end', () => {
+            try {
+                const movies = readMovies();
+                const data = JSON.parse(body);
+
+                const index = movies.findIndex(m => m.id === id);
+
+                if (index === -1) {
+                    res.writeHead(404);
+                    return res.end(JSON.stringify({ error: 'Not Found' }));
+                }
+
+                movies[index] = { ...movies[index], ...data, id };
+                saveMovies(movies);
+
+                res.writeHead(200);
+                return res.end(JSON.stringify(movies[index]));
+            } catch {
+                res.writeHead(400);
+                return res.end(JSON.stringify({ error: 'Invalid JSON' }));
+            }
+        });
+
+        return;
+    }
+
     res.writeHead(404);
     res.end(JSON.stringify({ error: 'Route Not Found' }));
 });
